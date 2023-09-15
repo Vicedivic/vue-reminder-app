@@ -1,6 +1,6 @@
 <template>
 <header>
-  <h1>{{ title }}</h1>
+  <h1>Reminder App</h1>
   <Button
     @click="store.toggleShowAddTaskForm()"
     :text="store.showAddTaskForm ? 'Close' : 'Add Task'"
@@ -15,10 +15,6 @@ import Button from './Button.vue';
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import store from '../store.js';
-
-defineProps({
-  title: String,
-});
 
 const route = useRoute();
 
