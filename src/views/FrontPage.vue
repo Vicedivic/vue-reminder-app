@@ -9,71 +9,60 @@ import AddTask from '../components/AddTask.vue';
 import { onMounted, ref } from 'vue';
 import store from '../store.js';
 
-const tasks = ref([]);
-
-const fetchTasks = async () => {
-  const res = await fetch('/tasks');
-  return await res.json();
-};
-
-onMounted(async () => {
-  tasks.value = await fetchTasks();
-});
-
-const fetchSingleTask = async (id) => {
-  const res = await fetch(`/tasks/${id}`);
-  return await res.json();
-};
+const serializedTasks = localStorage.getItem('tasks');
+const tasks = ref(JSON.parse(serializedTasks) || []);
 
 const deleteTask = async (taskId) => {
   if (!confirm('Are you sure you want to delete this task?')) {
     return;
   }
 
-  const res = await fetch(`/tasks/${taskId}`, { method: 'DELETE' });
-
-  if (res.status !== 200) {
-    alert('Error deleting task.');
-    return;
-  }
-
   tasks.value = tasks.value.filter((taskItem) => taskItem.id !== taskId);
+
+  storeTasksInLocalStorage();
 };
 
 const toggleReminder = async (taskId) => {
-  const taskToToggle = await fetchSingleTask(taskId);
+  const taskToToggle = tasks.value.find((task) => task.id === taskId);
+  if (!taskId) {
+    throw new Error('Task not found');
+  }
+
   const updatedTask = { ...taskToToggle, reminder: !taskToToggle.reminder };
-
-  const res = await fetch(`/tasks/${taskId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-type': 'application/json',
-    },
-    body: JSON.stringify(updatedTask),
-  });
-
-  const taskFromBackend = await res.json();
 
   tasks.value = tasks.value.map((taskItem) => {
     if (taskItem.id === taskId) {
-      return taskFromBackend;
+      return updatedTask;
     }
     return taskItem;
   });
+
+  storeTasksInLocalStorage();
 };
 
-const addTask = async (newTask) => {
-  const res = await fetch('/tasks', {
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json',
-    },
-    body: JSON.stringify(newTask),
-  });
+const storeTasksInLocalStorage = (taskList = tasks.value) => {
+  const serializedTasks = JSON.stringify(taskList);
+  localStorage.setItem('tasks', serializedTasks);
+};
 
-  const taskFromBackend = await res.json();
+const generateTaskId = () => {
+  if (!tasks.value.length) {
+    return 1;
+  }
 
-  tasks.value = [...tasks.value, taskFromBackend];
+  const taskIds = tasks.value.map((task) => task.id);
+  return Math.max(...taskIds) + 1;
+};
+
+const addTask = async (taskData) => {
+  const taskWithId = {
+    ...taskData,
+    id: generateTaskId(),
+  };
+
+  tasks.value = [...tasks.value, taskWithId];
+
+  storeTasksInLocalStorage();
 
   store.toggleShowAddTaskForm();
 };
