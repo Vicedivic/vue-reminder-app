@@ -16,8 +16,8 @@
 </template>
 
 <script setup>
-import XIcon from './XIcon.vue';
-import ImportantIcon from './ImportantIcon.vue';
+import XIcon from './icons/XIcon.vue';
+import ImportantIcon from './icons/ImportantIcon.vue';
 
 defineProps({
   task: Object,
